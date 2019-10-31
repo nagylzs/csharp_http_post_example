@@ -13,8 +13,8 @@ namespace test
     {
 
         public int exitCode = 1;
-        private Options opts;
-        CancellationTokenSource cancellationSource = new CancellationTokenSource();
+        private readonly Options opts;
+        private readonly CancellationTokenSource cancellationSource = new CancellationTokenSource();
 
 
         public Main(Options opts)
@@ -23,53 +23,77 @@ namespace test
             this.opts = opts;
         }
 
-        private void btnCancel_Click(object sender, EventArgs e)
-        {
-            exitCode = 1;
-            cancellationSource.Cancel();
-            Close();
-        }
 
-        async Task doUpload()
+        async Task DoUpload()
         {
             using (var content = new MultipartFormDataContent())
             {
                 List<FileStream> streams = new List<FileStream>();
                 try
                 {
+                    int idx = 0;
                     foreach (string fPath in opts.InputFiles)
                     {
                         FileStream stream = new FileStream(fPath, FileMode.Open, FileAccess.Read);
                         streams.Add(stream);
                         content.Add(new StreamContent(stream), fPath);
+                        idx += 1;
                     }
                     var progressContent = new ProgressableStreamContent(
                          content,
                          4096,
                          (sent, total) =>
                          {
-                             throw new Exception("FooBar");
-                             //double percent = progressBar.Maximum * sent / total;
-                             //progressBar.Value = (int)percent;
+                             Invoke((Action)(() =>
+                             {
+                                 double percent = progressBar.Maximum * sent / total;
+                                 progressBar.Value = (int)percent;
+                             }));
                          });
-
                     using (var client = new HttpClient())
                     {
+                        System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12 | System.Net.SecurityProtocolType.Tls11;
+
                         //client.Timeout = TimeSpan.FromMinutes(100); // 
-                        using (var response = await client.PostAsync(opts.URL, progressContent, cancellationSource.Token).ConfigureAwait(false))
-                            if (response.IsSuccessStatusCode)
+                        try
+                        {
+                            using (var response = await client.PostAsync(opts.URL, progressContent, cancellationSource.Token))
                             {
-                                exitCode = 0;
+                                if (response.IsSuccessStatusCode)
+                                {
+                                    exitCode = 0;
+                                }
+                                else
+                                {
+                                    MessageBox.Show(
+                                        response.Content.ToString(),
+                                        "Error " + response.StatusCode,
+                                        MessageBoxButtons.OK, MessageBoxIcon.Error
+                                   );
+                                    exitCode = 2;
+                                }
+                            }
+                        }
+                        catch (HttpRequestException requestException)
+                        {
+                            if (requestException.InnerException is System.Net.WebException webException)
+                            {
+                                MessageBox.Show(
+                                    webException.Message,
+                                    "Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Error
+                               );
                             }
                             else
                             {
                                 MessageBox.Show(
-                                    response.Content.ToString(),
-                                    "Error " + response.StatusCode,
+                                    requestException.Message,
+                                    "Error",
                                     MessageBoxButtons.OK, MessageBoxIcon.Error
                                );
                             }
-                        Close();
+                            exitCode = 3;
+                        }
                     };
                 }
                 finally
@@ -83,9 +107,6 @@ namespace test
 
         }
 
-        private void Main_Load(object sender, EventArgs e)
-        {
-        }
 
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
         {
@@ -94,7 +115,21 @@ namespace test
 
         private void Main_Shown(object sender, EventArgs e)
         {
-            doUpload();
+            DoUpload().ContinueWith((result) =>
+            {
+                cancellationSource.Cancel();
+                Invoke((Action)(() =>
+                {
+                    Application.Exit();
+                }));
+            });
+        }
+
+        private void BtnCancel_Click(object sender, EventArgs e)
+        {
+            exitCode = 1;
+            cancellationSource.Cancel();
+            Application.Exit();
         }
     }
 }

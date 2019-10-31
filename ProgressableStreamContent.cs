@@ -13,15 +13,10 @@ namespace test
     internal class ProgressableStreamContent : HttpContent
     {
 
-        /// <summary>
-        /// Lets keep buffer of 20kb
-        /// </summary>
         private const int defaultBufferSize = 5 * 4096;
-
-        private HttpContent content;
-        private int bufferSize;
-        //private bool contentConsumed;
-        private Action<long, long> progress;
+        private readonly HttpContent content;
+        private readonly int bufferSize;
+        private readonly Action<long, long> progress;
 
         public ProgressableStreamContent(HttpContent content, Action<long, long> progress) : this(content, defaultBufferSize, progress) { }
 
@@ -52,24 +47,19 @@ namespace test
             return Task.Run(async () =>
             {
                 var buffer = new Byte[this.bufferSize];
-                long size;
-                TryComputeLength(out size);
+                TryComputeLength(out long size);
                 var uploaded = 0;
 
 
-                using (var sinput = await content.ReadAsStreamAsync().ConfigureAwait(false))
+                using (var sinput = await content.ReadAsStreamAsync())
                 {
                     while (true)
                     {
                         var length = sinput.Read(buffer, 0, buffer.Length);
                         if (length <= 0) break;
 
-                        //downloader.Uploaded = uploaded += length;
                         uploaded += length;
                         progress?.Invoke(uploaded, size);
-
-                        //System.Diagnostics.Debug.WriteLine($"Bytes sent {uploaded} of {size}");
-
                         stream.Write(buffer, 0, length);
                         stream.Flush();
                     }

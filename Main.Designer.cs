@@ -29,25 +29,17 @@
         private void InitializeComponent()
         {
             this.progressBar = new System.Windows.Forms.ProgressBar();
-            this.uploadProgress = new System.Windows.Forms.ProgressBar();
             this.btnCancel = new System.Windows.Forms.Button();
             this.lblUpload = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // progressBar
             // 
-            this.progressBar.Location = new System.Drawing.Point(438, 0);
+            this.progressBar.Location = new System.Drawing.Point(16, 32);
+            this.progressBar.Maximum = 10000;
             this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(8, 8);
-            this.progressBar.TabIndex = 0;
-            // 
-            // uploadProgress
-            // 
-            this.uploadProgress.Location = new System.Drawing.Point(16, 32);
-            this.uploadProgress.Maximum = 10000;
-            this.uploadProgress.Name = "uploadProgress";
-            this.uploadProgress.Size = new System.Drawing.Size(608, 34);
-            this.uploadProgress.TabIndex = 1;
+            this.progressBar.Size = new System.Drawing.Size(608, 34);
+            this.progressBar.TabIndex = 1;
             // 
             // btnCancel
             // 
@@ -57,7 +49,7 @@
             this.btnCancel.TabIndex = 2;
             this.btnCancel.Text = "Cancel";
             this.btnCancel.UseVisualStyleBackColor = true;
-            this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
+            this.btnCancel.Click += new System.EventHandler(this.BtnCancel_Click);
             // 
             // lblUpload
             // 
@@ -76,7 +68,6 @@
             this.ClientSize = new System.Drawing.Size(632, 116);
             this.Controls.Add(this.lblUpload);
             this.Controls.Add(this.btnCancel);
-            this.Controls.Add(this.uploadProgress);
             this.Controls.Add(this.progressBar);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -85,7 +76,6 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Upload file";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Main_FormClosing);
-            this.Load += new System.EventHandler(this.Main_Load);
             this.Shown += new System.EventHandler(this.Main_Shown);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -95,7 +85,6 @@
         #endregion
 
         private System.Windows.Forms.ProgressBar progressBar;
-        private System.Windows.Forms.ProgressBar uploadProgress;
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Label lblUpload;
     }
